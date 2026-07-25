@@ -4,10 +4,11 @@
   "description": "Page Pulse - a website vitals monitor. Audits any URL for status, speed, structure and accessibility.",
   "main": "src/server.js",
   "type": "commonjs",
-  "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
-  },
+ "scripts": {
+  "start": "node src/server.js",
+  "dev": "node --watch src/server.js",
+  "test": "node --test"
+},
   "engines": {
     "node": ">=18.0.0"
   },
