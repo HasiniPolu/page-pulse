@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Pulse — website vitals monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F5F7F5;
+    --grid:#DCE3DE;
+    --ink:#12231F;
+    --ink-soft:#4B5C57;
+    --card:#FFFFFF;
+    --pulse:#E8432F;
+    --pulse-dim:#F6C9C1;
+    --signal:#0F7A66;
+    --signal-dim:#CDE9E1;
+    --amber:#D98F2B;
+    --amber-dim:#F6E3C4;
+    --line:#12231F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      var(--paper);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.6;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 32px;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    border-bottom:1px solid var(--ink);
+    background:var(--paper);
+    position:sticky; top:0; z-index:10;
+  }
+  .header-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 0;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600; font-size:19px; letter-spacing:0.5px;
+  }
+  .logo-dot{width:9px; height:9px; border-radius:50%; background:var(--pulse); box-shadow:0 0 0 3px var(--pulse-dim);}
+  nav{display:flex; gap:32px; font-size:14px; font-weight:500; color:var(--ink-soft);}
+  nav a{color:var(--ink-soft); text-decoration:none; cursor:pointer;}
+  nav a:hover{color:var(--ink);}
+  .repo-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:500;
+    border:1px solid var(--ink); padding:8px 16px; border-radius:2px;
+    color:var(--ink); text-decoration:none; display:flex; align-items:center; gap:8px;
+  }
+
+  /* ---------- HERO / MONITOR ---------- */
+  .monitor{
+    background:var(--ink); color:var(--paper); position:relative; overflow:hidden;
+    padding:64px 0 56px;
+  }
+  .monitor .wrap{position:relative; z-index:2;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:2.5px;
+    text-transform:uppercase; color:var(--pulse-dim); margin-bottom:18px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--pulse); animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;} 50%{opacity:0.25;}}
+  h1{
+    font-size:44px; font-weight:600; line-height:1.15; max-width:640px; margin-bottom:16px;
+    letter-spacing:-0.5px;
+  }
+  .hero-sub{color:#B9C7C2; max-width:520px; font-size:16px; margin-bottom:36px;}
+
+  .waveform{width:100%; height:70px; margin-bottom:36px; opacity:0.9;}
+  .waveform path{fill:none; stroke:var(--pulse); stroke-width:2;}
+
+  .intake{
+    background:#0B1613; border:1px solid #274038; border-radius:4px;
+    display:flex; align-items:stretch; max-width:640px;
+  }
+  .intake-label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:#6E8A81;
+    display:flex; align-items:center; padding:0 16px; border-right:1px solid #274038;
+    letter-spacing:1px;
+  }
+  .intake input{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--paper); font-family:'IBM Plex Mono', monospace; font-size:14px;
+    padding:16px;
+  }
+  .intake input::placeholder{color:#547066;}
+  .intake button{
+    background:var(--pulse); color:#fff; border:none; padding:0 26px;
+    font-family:'IBM Plex Mono', monospace; font-weight:500; font-size:14px;
+    cursor:pointer; letter-spacing:0.3px; white-space:nowrap;
+  }
+  .intake button:hover{background:#D13820;}
+  .hero-hint{font-size:12px; color:#6E8A81; margin-top:12px; font-family:'IBM Plex Mono', monospace;}
+
+  /* ---------- REPORT SECTION ---------- */
+  .report{padding:64px 0 40px;}
+  .section-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:28px; border-bottom:1px solid var(--ink); padding-bottom:14px;}
+  .section-head h2{font-size:20px; font-weight:600;}
+  .section-head .status{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--signal);
+    display:flex; align-items:center; gap:8px;
+  }
+  .status-dot{width:7px; height:7px; border-radius:50%; background:var(--signal);}
+
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .card{
+    background:var(--card); border:1px solid var(--ink); border-radius:2px; padding:20px;
+    position:relative;
+  }
+  .card-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .card-label{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--ink-soft);
+  }
+  .pill{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; padding:3px 8px; border-radius:20px;
+    font-weight:500;
+  }
+  .pill.ok{background:var(--signal-dim); color:#0A5443;}
+  .pill.warn{background:var(--amber-dim); color:#8C5D12;}
+  .card-value{font-size:28px; font-weight:600; font-family:'IBM Plex Mono', monospace;}
+  .card-value.small{font-size:16px; font-weight:500; font-family:'IBM Plex Sans', sans-serif; line-height:1.4;}
+  .card-foot{font-size:12px; color:var(--ink-soft); margin-top:8px;}
+
+  /* ---------- HOW IT WORKS ---------- */
+  .how{padding:48px 0 64px;}
+  .how-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--ink);}
+  .how-step{padding:28px 26px; border-right:1px solid var(--ink);}
+  .how-step:last-child{border-right:none;}
+  .how-num{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--pulse); margin-bottom:14px; letter-spacing:1px;}
+  .how-step h3{font-size:16px; font-weight:600; margin-bottom:8px;}
+  .how-step p{font-size:13.5px; color:var(--ink-soft);}
+
+  /* ---------- SCORE STRIP ---------- */
+  .score-strip{
+    background:var(--card); border-top:1px solid var(--ink); border-bottom:1px solid var(--ink);
+    padding:20px 0;
+  }
+  .score-inner{display:flex; align-items:center; justify-content:space-between;}
+  .score-item{display:flex; align-items:center; gap:10px;}
+  .score-item .n{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px;}
+  .score-item .l{font-size:12.5px; color:var(--ink-soft);}
+  .score-bar-wrap{display:flex; gap:24px;}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:36px 0 44px; border-top:1px solid var(--ink);}
+  .footer-inner{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;}
+  .credit{font-size:12.5px; color:var(--ink-soft);}
+  .credit a{color:var(--pulse); text-decoration:none; font-weight:500;}
+  .credit a:hover{text-decoration:underline;}
+  .footer-mono{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft);}
+
+  @media (max-width:820px){
+    .grid{grid-template-columns:repeat(2,1fr);}
+    .how-grid{grid-template-columns:1fr; }
+    .how-step{border-right:none; border-bottom:1px solid var(--ink);}
+    .how-step:last-child{border-bottom:none;}
+    h1{font-size:32px;}
+    nav{display:none;}
+  }
+  @media (max-width:560px){
+    .grid{grid-template-columns:1fr;}
+    .intake{flex-direction:column;}
+    .intake-label{border-right:none; border-bottom:1px solid #274038; padding:10px 16px;}
+    .footer-inner{flex-direction:column; align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-inner">
+    <div class="logo"><span class="logo-dot"></span>PAGE PULSE</div>
+    <nav>
+      <a>Product</a>
+      <a>API docs</a>
+      <a>Report card</a>
+    </nav>
+    <a class="repo-btn" href="#">View on GitHub</a>
+  </div>
+</header>
+
+<section class="monitor">
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span>LIVE URL DIAGNOSTIC</div>
+    <h1>Take any page's vitals in seconds.</h1>
+    <p class="hero-sub">Paste a URL. Page Pulse fetches it, reads its vitals — status, speed, structure, accessibility — and returns a clean report before you've finished your coffee.</p>
+
+    <svg class="waveform" viewBox="0 0 700 70" preserveAspectRatio="none">
+      <path d="M0,35 L120,35 L135,10 L150,60 L165,20 L180,35 L260,35 L275,15 L290,55 L305,35 L700,35" />
+    </svg>
+
+    <div class="intake">
+      <div class="intake-label">URL</div>
+      <input type="text" id="url-input" placeholder="https://example.com" />
+      <button id="check-btn">Check vitals →</button>
+    </div>
+    <div class="hero-hint" id="hero-hint">POST /api/audit &nbsp;·&nbsp; returns JSON in ~1.2s avg</div>
+  </div>
+</section>
+
+<section class="report" id="report-section" style="display:none;">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Vitals report</h2>
+      <div class="status" id="report-status"><span class="status-dot"></span>—</div>
+    </div>
+
+    <div class="grid" id="report-grid"></div>
+  </div>
+</section>
+
+<section id="empty-section">
+  <div class="wrap" style="padding:48px 0 8px; text-align:center; color:var(--ink-soft); font-size:13.5px;">
+    Paste a URL above and check its vitals to see a live report here.
+  </div>
+</section>
+
+<section id="error-section" style="display:none;">
+  <div class="wrap" style="padding:0 0 8px;">
+    <div class="card" style="border-color:var(--pulse);">
+      <div class="card-top"><span class="card-label">Check failed</span><span class="pill warn" id="error-code">Error</span></div>
+      <div class="card-value small" id="error-message">Something went wrong.</div>
+    </div>
+  </div>
+</section>
+
+<section class="score-strip">
+  <div class="wrap score-inner">
+    <div class="score-bar-wrap">
+      <div class="score-item"><span class="status-dot" style="background:var(--signal);"></span><span class="n">Correctness &amp; error handling</span><span class="l">weighted 40</span></div>
+      <div class="score-item"><span class="status-dot" style="background:var(--signal);"></span><span class="n">Code quality</span><span class="l">weighted 35</span></div>
+      <div class="score-item"><span class="status-dot" style="background:var(--signal);"></span><span class="n">API design</span><span class="l">weighted 25</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <div class="wrap">
+    <div class="section-head" style="border-bottom:none; margin-bottom:0;">
+      <h2>How a check runs</h2>
+    </div>
+    <div class="how-grid" style="margin-top:24px;">
+      <div class="how-step">
+        <div class="how-num">01 · FETCH</div>
+        <h3>Request the page</h3>
+        <p>Validates the URL, sets a timeout, and fetches the response — catching DNS failures, redirects, and non-HTML content before anything else runs.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">02 · READ</div>
+        <h3>Read its vitals</h3>
+        <p>Parses the HTML for title, meta description, heading structure, image alt coverage, and an approximate word count.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">03 · REPORT</div>
+        <h3>Return the report</h3>
+        <p>Packages everything into clean JSON and renders it on the page — with sensible, specific errors if anything along the way failed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div class="footer-mono">PAGE PULSE — a website vitals monitor</div>
+    <div class="credit">Built for Digital Heroes Training Task, linked to <a href="https://digitalheroesco.com" target="_blank" rel="noopener">digitalheroesco.com</a></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const urlInput = document.getElementById("url-input");
+  const checkBtn = document.getElementById("check-btn");
+  const heroHint = document.getElementById("hero-hint");
+  const reportSection = document.getElementById("report-section");
+  const emptySection = document.getElementById("empty-section");
+  const errorSection = document.getElementById("error-section");
+  const reportGrid = document.getElementById("report-grid");
+  const reportStatus = document.getElementById("report-status");
+  const errorCode = document.getElementById("error-code");
+  const errorMessage = document.getElementById("error-message");
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[c]));
+  }
+
+  function card(label, valueHtml, footHtml, pill) {
+    const pillHtml = pill ? `<span class="pill ${pill.type}">${pill.text}</span>` : "";
+    return `<div class="card">
+      <div class="card-top"><span class="card-label">${label}</span>${pillHtml}</div>
+      <div class="card-value ${valueHtml.length > 24 ? "small" : ""}">${valueHtml}</div>
+      <div class="card-foot">${footHtml}</div>
+    </div>`;
+  }
+
+  function renderReport(report) {
+    const statusPill = report.ok
+      ? { type: "ok", text: "Pass" }
+      : { type: "warn", text: "Check" };
+    const speedPill = report.responseTimeMs < 1000
+      ? { type: "ok", text: "Pass" }
+      : { type: "warn", text: "Slow" };
+    const h1Pill = report.h1Count === 1
+      ? { type: "ok", text: "Pass" }
+      : { type: "warn", text: report.h1Count === 0 ? "Missing" : "Multiple" };
+    const altPill = report.images.missingAlt === 0
+      ? { type: "ok", text: "Pass" }
+      : { type: "warn", text: `${report.images.missingAlt} flagged` };
+
+    let html = "";
+    html += card("HTTP status", report.httpStatus, report.ok ? "OK — resolved successfully" : "Non-2xx response", statusPill);
+    html += card("Response time", `${report.responseTimeMs}<span style="font-size:14px;font-weight:500;">ms</span>`, report.responseTimeMs < 1000 ? "Under the 1s threshold" : "Over the 1s threshold", speedPill);
+    html += card("Word count", report.wordCount, "Approximate body text count", { type: "ok", text: "Read" });
+    html += card("Page title", report.title ? `"${escapeHtml(report.title)}"` : "Missing", report.title ? `${report.title.length} characters` : "No &lt;title&gt; tag found", report.title ? null : { type: "warn", text: "Missing" });
+    html += card("Meta description", report.metaDescription ? `"${escapeHtml(report.metaDescription)}"` : "Missing", report.metaDescription ? `${report.metaDescription.length} characters` : "No meta description found", report.metaDescription ? null : { type: "warn", text: "Missing" });
+    html += card("H1 count", report.h1Count, report.h1Count === 1 ? "Exactly one H1 — good structure" : "Best practice is exactly one H1", h1Pill);
+
+    const samples = report.images.missingAltSamples?.length
+      ? escapeHtml(report.images.missingAltSamples.join(" · "))
+      : "All images have alt text";
+    html += `<div class="card" style="grid-column: span 3;">
+      <div class="card-top"><span class="card-label">Images missing alt text</span><span class="pill ${altPill.type}">${altPill.text}</span></div>
+      <div class="card-value">${report.images.missingAlt}<span style="font-size:14px;font-weight:500;"> of ${report.images.total} images</span></div>
+      <div class="card-foot">${samples}</div>
+    </div>`;
+
+    reportGrid.innerHTML = html;
+
+    const host = (() => { try { return new URL(report.url).host + new URL(report.url).pathname; } catch { return report.url; } })();
+    reportStatus.innerHTML = `<span class="status-dot" style="background:${report.ok ? "var(--signal)" : "var(--amber)"};"></span>${escapeHtml(host)} — ${report.ok ? "healthy" : "flagged"}`;
+
+    reportSection.style.display = "";
+    errorSection.style.display = "none";
+    emptySection.style.display = "none";
+  }
+
+  function renderError(code, message) {
+    errorCode.textContent = code || "Error";
+    errorMessage.textContent = message || "Something went wrong.";
+    errorSection.style.display = "";
+    reportSection.style.display = "none";
+    emptySection.style.display = "none";
+  }
+
+  async function runCheck() {
+    const url = urlInput.value.trim();
+    if (!url) {
+      renderError("MISSING_URL", "Enter a URL to check first.");
+      return;
+    }
+
+    checkBtn.disabled = true;
+    checkBtn.textContent = "Checking…";
+    heroHint.textContent = "Fetching page, reading vitals…";
+
+    try {
+      const res = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const payload = await res.json();
+
+      if (!res.ok) {
+        renderError(payload.error?.code, payload.error?.message);
+      } else {
+        renderReport(payload.data);
+      }
+    } catch (err) {
+      renderError("NETWORK_ERROR", "Could not reach the Page Pulse API. Is the server running?");
+    } finally {
+      checkBtn.disabled = false;
+      checkBtn.textContent = "Check vitals →";
+      heroHint.innerHTML = "POST /api/audit &nbsp;·&nbsp; returns JSON in ~1.2s avg";
+    }
+  }
+
+  checkBtn.addEventListener("click", runCheck);
+  urlInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") runCheck();
+  });
+})();
+</script>
+</body>
+</html>
