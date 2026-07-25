@@ -1,128 +1,196 @@
 # Page Pulse
 
-A website vitals monitor. Paste any URL and get back a JSON report: HTTP
-status, response time, page title, meta description, H1 count, images
-missing alt text, and an approximate word count — plus a frontend that
-renders it cleanly.
-## Features
+A lightweight website auditing tool that analyzes any webpage and provides key performance, SEO, and accessibility metrics. Built with Node.js and Express.
 
-- Analyze any website URL
-- HTTP Status Detection
-- Response Time Measurement
-- Page Title Extraction
-- Meta Description Detection
-- H1 Count
-- Images Missing ALT Text
-- Approximate Word Count
-- Responsive Dashboard
-- Proper Error Handling
-## Tech Stack
+---
 
-### Frontend
-- React.js
-- CSS3
-
-### Backend
-- Node.js
-- Express.js
-
-### Libraries
-- Axios
-- Cheerio
 ## Live Demo
 
 https://page-pulse-rlj0.onrender.com/
 
-## Run locally
+---
+
+## GitHub Repository
+
+https://github.com/HasiniPolu/page-pulse
+
+---
+
+## Features
+
+- Audit any public website URL
+- HTTP status detection
+- Response time measurement
+- Extract page title
+- Extract meta description
+- Count H1 headings
+- Detect images missing alt text
+- Approximate page word count
+- Handles invalid URLs gracefully
+- Handles non-HTML responses
+- Handles request timeouts
+
+---
+
+## Tech Stack
+
+- Node.js
+- Express.js
+- Cheerio
+- HTML
+- CSS
+- JavaScript
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/HasiniPolu/page-pulse.git
+```
+
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Start the server:
+
+```bash
 npm start
 ```
 
-Open `http://localhost:3000`.
+Open:
 
-## API
-
-**POST `/api/audit`**
-
-```json
-// request
-{ "url": "https://example.com" }
+```
+http://localhost:3000
 ```
 
+---
+
+## Running Tests
+
+Run all automated tests:
+
+```bash
+npm test
+```
+
+Expected output:
+
+```
+Suites: 4
+Pass: 13
+Fail: 0
+```
+
+---
+
+## API Contract
+
+### POST `/api/audit`
+
+#### Request
+
 ```json
-// 200 response
 {
-  "data": {
-    "url": "https://example.com/",
-    "httpStatus": 200,
-    "ok": true,
-    "responseTimeMs": 312,
-    "title": "Example Domain",
-    "metaDescription": null,
-    "h1Count": 1,
-    "images": { "total": 0, "missingAlt": 0, "missingAltSamples": [] },
-    "wordCount": 28,
-    "checkedAt": "2026-07-25T10:00:00.000Z"
-  }
+  "url": "https://example.com"
 }
 ```
 
+#### Successful Response
+
 ```json
-// error response (4xx/5xx)
 {
-  "error": { "code": "TIMEOUT", "message": "The page took longer than 8s to respond." }
+  "status": 200,
+  "responseTime": 132,
+  "title": "Example Domain",
+  "metaDescription": "Example description",
+  "h1Count": 1,
+  "missingAltCount": 0,
+  "wordCount": 412
 }
 ```
 
-| Code | Status | When |
-|---|---|---|
-| `MISSING_URL` / `INVALID_URL` / `UNSUPPORTED_PROTOCOL` | 400 | Malformed input |
-| `TIMEOUT` | 504 | No response within 8s |
-| `UNREACHABLE` | 502 | DNS failure, connection refused, etc. |
-| `NOT_HTML` | 415 | The URL returned a non-HTML content type |
-| `PAGE_TOO_LARGE` | 413 | Response body over 5MB |
-| `INTERNAL_ERROR` | 500 | Anything unexpected |
+#### Error Response
 
-`GET /api/health` returns `{ "status": "ok" }` for uptime checks.
-
-## Project structure
-
-```
-src/
-  server.js            Express app entry
-  routes/audit.js       HTTP layer only — no business logic
-  services/
-    fetcher.js           Network fetch, timeout, size cap
-    parser.js             Pure HTML -> vitals extraction (cheerio)
-    auditService.js       Orchestrates fetcher + parser into a report
-  middleware/errorHandler.js  Centralized error -> HTTP response mapping
-  utils/
-    AppError.js            Typed error with status + code
-    validateUrl.js          Input validation
-public/
-  index.html              Frontend, calls POST /api/audit
+```json
+{
+  "error": "Invalid URL"
+}
 ```
 
-Each layer has one job: routes handle HTTP, services handle logic,
-`AppError` carries the failure reason all the way to the response without
-route code needing to know the details.
+---
 
-## Deploying (free tier)
+## Project Structure
 
-**Render**
-1. Push this repo to GitHub.
-2. New → Web Service → connect the repo.
-3. Build command: `npm install`. Start command: `npm start`.
-4. Deploy — Render provides the live URL.
+```
+page-pulse/
+│
+├── public/
+├── src/
+│   ├── middleware/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   ├── fetcher.js
+│   ├── parser.js
+│   ├── auditService.js
+│   └── server.js
+│
+├── test/
+│   ├── parser.test.js
+│   └── validateUrl.test.js
+│
+├── package.json
+├── README.md
+└── .gitignore
+```
 
-**Railway / Fly.io** work the same way: point at the repo, `npm start` as
-the run command, no environment variables required.
+---
 
-## Notes
+## Design Decisions
 
-- Timeout is 8s per request; response body is capped at 5MB.
-- Redirects are followed automatically; the final URL is included in the
-  report when it differs from the input.
-- Word count is approximate — text content only, scripts/styles stripped.
+### 1. Separation of Parsing Logic
+
+The HTML parser is implemented independently from the network-fetching logic. This separation makes the parser easier to test using sample HTML without making HTTP requests.
+
+### 2. Centralized Error Handling
+
+A custom `AppError` class provides consistent and readable error responses throughout the application while simplifying error management.
+
+### 3. Safe Network Requests
+
+The application enforces an 8-second timeout and limits response size to prevent long-running requests and excessive memory usage.
+
+---
+
+## Testing
+
+Automated tests cover:
+
+- HTML parser functionality
+- URL validation
+- Error handling
+- Edge cases
+
+Current test status:
+
+- ✅ 4 Test Suites
+- ✅ 13 Tests Passed
+- ✅ 0 Failures
+
+---
+
+## Footer Requirement
+
+The deployed application includes the required footer:
+
+**Built for Digital Heroes Training Task**
+
+linked to:
+
+https://digitalheroesco.com
